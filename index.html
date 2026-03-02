@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskEarn | Online Micro-Jobs</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .hidden { display: none; }
+        .active-tab { border-bottom: 3px solid #4f46e5; color: #4f46e5; font-weight: bold; }
+        .modal-bg { background: rgba(0,0,0,0.5); }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+
+    <nav class="bg-white shadow-sm p-4 sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-indigo-600 cursor-pointer" onclick="if(user) showSection('main-app')">TaskEarn</h1>
+            
+            <div id="nav-links">
+                <button onclick="showSection('login-section')" class="px-4 py-2 text-gray-600">Login</button>
+                <button onclick="showSection('register-section')" class="bg-indigo-600 text-white px-5 py-2 rounded-lg">Join Now</button>
+            </div>
+
+            <div id="user-info" class="hidden flex items-center gap-6">
+                <div class="flex border-b border-gray-100 mr-4">
+                    <button id="nav-tasks" onclick="showSection('main-app')" class="px-4 py-2 text-gray-600 transition">Tasks</button>
+                    <button id="nav-withdraw" onclick="showSection('withdraw-section')" class="px-4 py-2 text-gray-600 transition">Withdraw</button>
+                </div>
+                <span class="font-medium text-gray-700 hidden md:inline" id="display-username"></span>
+                <button onclick="logout()" class="text-red-500 text-sm font-semibold">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <div id="payment-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center modal-bg p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-gray-100">
+            <div class="text-center">
+                <div class="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">Activation Required</h3>
+                <p class="text-gray-600 text-sm mb-6">To access premium high-pay tasks and start earning, pay a one-time activation fee.</p>
+                
+                <div class="bg-gray-50 p-4 rounded-lg mb-6 text-left">
+                    <p class="text-xs text-gray-500 uppercase font-bold mb-1">Payment Details</p>
+                    <p class="text-sm text-gray-700">Till Number: <span class="font-bold text-indigo-600">3238647</span></p>
+                    <p class="text-sm text-gray-700">Amount: <span class="font-bold">Ksh 250</span></p>
+                </div>
+
+                <button onclick="processPaymentRequest()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold mb-3 hover:bg-indigo-700 transition">I Have Paid</button>
+                <button onclick="closeModal()" class="text-gray-400 text-sm hover:text-gray-600">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <main class="max-w-6xl mx-auto p-6">
+        
+        <section id="register-section" class="max-w-md mx-auto bg-white p-8 rounded-xl shadow-md mt-10">
+            <h2 class="text-2xl font-bold mb-6">Create Account</h2>
+            <input type="text" id="reg-user" placeholder="Full Name" class="w-full mb-4 p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+            <input type="email" id="reg-email" placeholder="Email" class="w-full mb-4 p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+            <input type="password" id="reg-pass" placeholder="Password" class="w-full mb-6 p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+            <button onclick="register()" class="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition">Register</button>
+        </section>
+
+        <section id="login-section" class="hidden max-w-md mx-auto bg-white p-8 rounded-xl shadow-md mt-10">
+            <h2 class="text-2xl font-bold mb-6">Welcome Back</h2>
+            <input type="email" id="login-email" placeholder="Email" class="w-full mb-4 p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+            <input type="password" id="login-pass" placeholder="Password" class="w-full mb-6 p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+            <button onclick="login()" class="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition">Login</button>
+        </section>
+
+        <section id="withdraw-section" class="hidden max-w-md mx-auto bg-white p-8 rounded-xl shadow-md mt-10">
+            <h2 class="text-2xl font-bold mb-6 text-gray-800">Withdraw Funds</h2>
+            <div class="bg-indigo-50 p-4 rounded-lg mb-6 text-center">
+                <p class="text-sm text-indigo-600">Available to Withdraw</p>
+                <h3 class="text-3xl font-bold text-indigo-800">$<span id="withdraw-balance">0.00</span></h3>
+            </div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Select Method</label>
+            <select class="w-full mb-4 p-3 border rounded-lg bg-white">
+                <option>M-PESA</option>
+                <option>PayPal</option>
+                <option>Bank Transfer</option>
+            </select>
+            <input type="number" id="withdraw-amount" placeholder="Amount to withdraw ($)" class="w-full mb-4 p-3 border rounded-lg outline-none focus:border-indigo-500">
+            <input type="text" placeholder="Account/Phone Number" class="w-full mb-6 p-3 border rounded-lg outline-none focus:border-indigo-500">
+            <button onclick="requestWithdrawal()" class="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition">Submit Request</button>
+            <p class="text-[10px] text-gray-400 mt-4 text-center">Minimum withdrawal: $50.00. Processing takes 24-48 hours.</p>
+        </section>
+
+        <section id="main-app" class="hidden">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-green-500">
+                    <p class="text-gray-500 text-sm">Current Balance</p>
+                    <h3 class="text-3xl font-bold text-gray-800">$<span id="balance">0.00</span></h3>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-blue-500">
+                    <p class="text-gray-500 text-sm">Tasks Completed</p>
+                    <h3 class="text-3xl font-bold text-gray-800" id="tasks-done">0</h3>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-indigo-500">
+                    <p class="text-gray-500 text-sm">Member Status</p>
+                    <h3 class="text-xl font-bold text-indigo-600 mt-2">Verified Seller</h3>
+                </div>
+            </div>
+
+            <h2 class="text-2xl font-bold mb-6 text-gray-800">Available High-Pay Tasks</h2>
+            <div id="job-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                </div>
+        </section>
+
+    </main>
+
+    <script>
+        // State Management
+        let user = null;
+        let balance = 0.00;
+        let completedCount = 0;
+        let isSubscribed = false;
+
+        const jobs = [
+            { id: 1, title: "App Beta Tester", pay: 45.50, desc: "Test a new fitness app for bugs." },
+            { id: 2, title: "Data Entry - Invoices", pay: 25.00, desc: "Type 50 invoice entries into Excel." },
+            { id: 3, title: "Logo Design Concept", pay: 85.00, desc: "Create a minimalist logo for a cafe." },
+            { id: 4, title: "English to Spanish Translation", pay: 48.00, desc: "Translate a 500-word blog post." },
+            { id: 5, title: "Voiceover (30 sec)", pay: 62.00, desc: "Record a script for a radio ad." },
+            { id: 6, title: "Social Media Manager", pay: 125.00, desc: "Schedule 1 week of posts for Instagram." },
+            { id: 7, title: "Customer Support Chat", pay: 35.50, desc: "Answer 10 customer queries." },
+            { id: 8, title: "Website Bug Fix", pay: 90.00, desc: "Fix a CSS alignment issue on a landing page." },
+            { id: 9, title: "Product Review", pay: 20.00, desc: "Write an honest review for a tech gadget." },
+            { id: 10, title: "Virtual Assistant", pay: 50.00, desc: "Organize 20 emails and set calendar alerts." },
+            { id: 11, title: "Video Subtitles", pay: 47.00, desc: "Add captions to a 5-minute YouTube video." },
+            { id: 12, title: "SEO Keyword Research", pay: 78.00, desc: "Find 50 keywords for a travel blog." },
+            { id: 13, title: "PowerPoint Design", pay: 64.00, desc: "Re-style a 10-slide deck for a pitch." },
+            { id: 14, title: "Transcription", pay: 55.50, desc: "Transcribe a 10-minute interview audio." },
+            { id: 15, title: "Proofreading", pay: 36.00, desc: "Check a short story for grammar errors." }
+        ];
+
+        function showSection(id) {
+            // Hide all sections
+            document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
+            // Remove active classes from nav buttons
+            document.getElementById('nav-tasks').classList.remove('active-tab');
+            document.getElementById('nav-withdraw').classList.remove('active-tab');
+
+            // Show target section
+            document.getElementById(id).classList.remove('hidden');
+
+            // Update Nav Highlighting
+            if (id === 'main-app') {
+                document.getElementById('nav-tasks').classList.add('active-tab');
+            } else if (id === 'withdraw-section') {
+                document.getElementById('nav-withdraw').classList.add('active-tab');
+                document.getElementById('withdraw-balance').innerText = balance.toFixed(2);
+            }
+        }
+
+        function register() {
+            const name = document.getElementById('reg-user').value;
+            if(!name) return alert("Enter a name");
+            user = name;
+            localStorage.setItem('user', name);
+            showMainApp();
+        }
+
+        function login() {
+            const email = document.getElementById('login-email').value;
+            if(!email) return alert("Enter email");
+            user = email.split('@')[0];
+            showMainApp();
+        }
+
+        function showMainApp() {
+            showSection('main-app');
+            document.getElementById('nav-links').classList.add('hidden');
+            document.getElementById('user-info').classList.remove('hidden');
+            document.getElementById('display-username').innerText = `Hi, ${user}`;
+            renderJobs();
+        }
+
+        function logout() {
+            user = null;
+            location.reload();
+        }
+
+        function renderJobs() {
+            const grid = document.getElementById('job-grid');
+            grid.innerHTML = jobs.map(job => `
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition">
+                    <div class="flex justify-between items-start mb-3">
+                        <h4 class="font-bold text-gray-800">${job.title}</h4>
+                        <span class="text-green-600 font-bold">$${job.pay.toFixed(2)}</span>
+                    </div>
+                    <p class="text-gray-600 text-sm mb-4">${job.desc}</p>
+                    <button onclick="applyJob(${job.id}, ${job.pay})" class="w-full border border-indigo-600 text-indigo-600 py-2 rounded-lg hover:bg-indigo-50 transition text-sm font-medium">
+                        Apply Now
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function applyJob(id, pay) {
+            if (!isSubscribed) {
+                document.getElementById('payment-modal').classList.remove('hidden');
+                return;
+            }
+
+            alert("Application Submitted! Your balance will update once approved (Simulated).");
+            balance += pay;
+            completedCount++;
+            updateUI();
+        }
+
+        function processPaymentRequest() {
+            alert("Verification initiated! Your payment is being cross-checked with Till 3238647. The security activation code will be sent to your email after 15 minutes.");
+            
+            const code = prompt("After 15 minutes, please enter the security code received in your email:");
+            if (code === "2345") {
+                alert("Subscription Successful! Premium access granted.");
+                isSubscribed = true;
+                closeModal();
+            } else {
+                alert("Incorrect code or verification pending. Please check your email after 15 minutes.");
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('payment-modal').classList.add('hidden');
+        }
+
+        function requestWithdrawal() {
+            const amt = parseFloat(document.getElementById('withdraw-amount').value);
+            if (isNaN(amt) || amt <= 0) return alert("Enter a valid amount.");
+            if (amt > balance) return alert("Insufficient balance.");
+            if (amt < 50) return alert("Minimum withdrawal is $50.00.");
+            
+            alert(`Withdrawal request for $${amt.toFixed(2)} submitted successfully!`);
+            balance -= amt;
+            updateUI();
+            showSection('main-app');
+        }
+
+        function updateUI() {
+            document.getElementById('balance').innerText = balance.toFixed(2);
+            document.getElementById('tasks-done').innerText = completedCount;
+            document.getElementById('withdraw-balance').innerText = balance.toFixed(2);
+        }
+    </script>
+</body>
+</html>
